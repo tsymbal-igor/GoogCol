@@ -52,7 +52,7 @@ def isMazeNotGood(maze, wall_code=1):
 # In[ ]:
 
 
-def mazegen(seed, maze):
+def mazegen(seed, maze, print_every_iter=0, hoop_flag=False, hoop_threshold=1000):
     """
     генератор лабиринта
     # "-1" - проход
@@ -60,6 +60,8 @@ def mazegen(seed, maze):
     # "1" - поле для прорубки лабиринта
     """
     iternum = 0
+
+    make_hoop_flag=False
 
     random.seed(seed)   # инициализируем случайные числа чтобы иметь
                         # возможность повторить результат
@@ -87,13 +89,19 @@ def mazegen(seed, maze):
             dx = -1
             dy = 0
 
-        if ((x+2*dx > 0) & (x+2*dx < width - 1) &
-            (y+2*dy > 0) & (y+2*dy < hight - 1)):
+        if ((x+2*dx > 0) and (x+2*dx < width - 1) and
+            (y+2*dy > 0) and (y+2*dy < hight - 1)):
 
             # прорубаем проход если за стеной уже нет прохода
             # либо возвращаемся по уже прорубленному проходу
-            if (((maze[y+dy, x+dx] == 1) & (maze[y+2*dy, x+2*dx] != -1)) |
-                (maze[y+dy, x+dx] == -1)):
+            is_not_single_wall_ahead = ((maze[y+dy, x+dx] == 1) &
+                                        (maze[y+2*dy, x+2*dx] != -1))
+            is_pass_ahead = maze[y+dy, x+dx] == -1
+
+            if ((is_not_single_wall_ahead or (hoop_flag and make_hoop_flag)) or
+                is_pass_ahead):
+            #  if (((maze[y+dy, x+dx] == 1) & (maze[y+2*dy, x+2*dx] != -1)) |
+            #  (maze[y+dy, x+dx] == -1)):
 
                 # прорубаем две клетки и запоминаем текущее положение
                 maze[y+dy, x+dx] = -1
@@ -102,8 +110,13 @@ def mazegen(seed, maze):
                 y += 2*dy
         iternum += 1
 
-        if (iternum//300-iternum/300) == 0:
+        if ((print_every_iter != 0) and ((iternum//300-iternum/300) == 0)):
             print('количество итераций', iternum)
+
+        if (iternum//hoop_threshold-iternum/hoop_threshold) == 0:
+            make_hoop_flag = True
+        else:
+            make_hoop_flag = False
 
     return maze
 # In[ ]:
@@ -116,7 +129,7 @@ def showmaze(maze):
     for y in range(hight):
         print('')
         for x in range(width):
-            if ((maze[y, x] == 0) | (maze[y, x] == 1)):
+            if ((maze[y, x] == 0) or (maze[y, x] == 1)):
                 print('# ', end='')
             else:
                 print('  ', end='')
@@ -126,11 +139,9 @@ def showmaze(maze):
 
 for n in range(1):
 
-    maze = initMaze(25, 33)
-    maze = mazegen(n, maze)
+    maze = initMaze(25, 30)
+    maze = mazegen(n, maze, 300, True, hoop_threshold=200)
     showmaze(maze)
 
     print('\n')
 
-# In[ ]:
-    input()
